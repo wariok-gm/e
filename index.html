@@ -128,6 +128,8 @@
     let playing = true;
     let remainingTime = 0;  // Store the remaining time for the current slide
     const slideDuration = 5000; // Duration for each slide in milliseconds
+    let progressStartTime;  // Time when the progress bar starts moving
+    let timePaused = 0;  // Time remaining when paused
 
     // Update and display current time
     function updateTime() {
@@ -195,10 +197,10 @@
 
         slides[slideIndex - 1].style.display = "block";  
 
-        // Reset the timer every time showSlides is called
+        // Reset the timer and progress bar for the new slide
         if (playing) {
             remainingTime = slideDuration;  // Reset remaining time for the new slide
-            updateProgressBar(slideDuration);  // Start progress bar for the new slide
+            updateProgressBar(remainingTime);  // Start progress bar for the new slide
             timer = setTimeout(showSlides, remainingTime); // Change image after remaining time
         }
     }
@@ -216,27 +218,28 @@
         const progressBar = document.getElementById('progress');
 
         if (playing) {
-            clearTimeout(timer);
-            remainingTime -= Date.now() - startTime; // Calculate remaining time for the slide
-            playPauseBtn.innerHTML = '▶️'; // Change to play icon
-            progressBar.style.transition = 'none'; // Stop progress bar transition
+            clearTimeout(timer);  // Pause the slideshow
+            timePaused = remainingTime - (Date.now() - progressStartTime);  // Calculate the remaining time
+            playPauseBtn.innerHTML = '&#9658;'; // Change to play icon
+            progressBar.style.transition = 'none'; // Stop the progress bar
+            progressBar.style.width = getComputedStyle(progressBar).width;  // Keep current width
         } else {
-            playPauseBtn.innerHTML = '⏸️'; // Change to pause icon
-            updateProgressBar(remainingTime);  // Resume progress bar from remaining time
-            timer = setTimeout(showSlides, remainingTime);  // Resume timer from remaining time
+            playPauseBtn.innerHTML = '&#10074;&#10074;'; // Change to pause icon
+            progressStartTime = Date.now();  // Reset the progress bar start time
+            updateProgressBar(timePaused);  // Resume the progress bar from where it left off
+            timer = setTimeout(showSlides, timePaused);  // Resume slideshow from the remaining time
         }
         playing = !playing;
     }
 
     // Update the progress bar for each slide
-    let startTime;
     function updateProgressBar(duration) {
         const progressBar = document.getElementById('progress');
         progressBar.style.transition = 'none';
         progressBar.style.width = '100%'; // Reset to full width
 
         setTimeout(() => {
-            startTime = Date.now();  // Record the start time
+            progressStartTime = Date.now();  // Record the start time
             progressBar.style.transition = `width ${duration}ms linear`;
             progressBar.style.width = '0%';
         }, 50); // Small delay to allow reset before starting transition
