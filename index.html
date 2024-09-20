@@ -53,7 +53,7 @@
             border-color: white;
         }
 
-        /* Progress bar at the bottom */
+        /* Black Progress bar at the bottom */
         .progress-bar {
             position: absolute;
             bottom: 0;
@@ -65,11 +65,11 @@
         .progress {
             width: 100%;
             height: 100%;
-            background-color: green;
+            background-color: black;
             transition: width linear;
         }
 
-        /* Play/Pause Button */
+        /* Play/Pause Icon Button */
         .play-pause-button {
             position: absolute;
             bottom: 20px;
@@ -79,6 +79,7 @@
             padding: 10px;
             border: none;
             cursor: pointer;
+            font-size: 24px;
         }
 
         /* Current Time Display */
@@ -111,8 +112,8 @@
     <div class="progress" id="progress"></div>
 </div>
 
-<!-- Play/Pause Button -->
-<button class="play-pause-button" id="playPauseBtn" onclick="togglePlayPause()">Pause</button>
+<!-- Play/Pause Button as Icon -->
+<button class="play-pause-button" id="playPauseBtn" onclick="togglePlayPause()">&#10074;&#10074;</button>
 
 <!-- Current Time Display -->
 <div class="time-display" id="timeDisplay"></div>
@@ -217,10 +218,10 @@
         if (playing) {
             clearTimeout(timer);
             remainingTime -= Date.now() - startTime; // Calculate remaining time for the slide
-            playPauseBtn.textContent = 'Play';
+            playPauseBtn.innerHTML = '25B6'; // Change to play icon
             progressBar.style.transition = 'none'; // Stop progress bar transition
         } else {
-            playPauseBtn.textContent = 'Pause';
+            playPauseBtn.innerHTML = '25C0'; // Change to pause icon
             updateProgressBar(remainingTime);  // Resume progress bar from remaining time
             timer = setTimeout(showSlides, remainingTime);  // Resume timer from remaining time
         }
