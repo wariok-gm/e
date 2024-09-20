@@ -218,10 +218,10 @@
         if (playing) {
             clearTimeout(timer);
             remainingTime -= Date.now() - startTime; // Calculate remaining time for the slide
-            playPauseBtn.innerHTML = '25B6'; // Change to play icon
+            playPauseBtn.innerHTML = '▶️'; // Change to play icon
             progressBar.style.transition = 'none'; // Stop progress bar transition
         } else {
-            playPauseBtn.innerHTML = '25C0'; // Change to pause icon
+            playPauseBtn.innerHTML = '⏸️'; // Change to pause icon
             updateProgressBar(remainingTime);  // Resume progress bar from remaining time
             timer = setTimeout(showSlides, remainingTime);  // Resume timer from remaining time
         }
