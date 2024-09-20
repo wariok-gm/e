@@ -27,7 +27,7 @@
         .slides img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain; /* Change to 'contain' to fit the entire image without cropping */
         }
         .preview-menu {
             position: absolute;
@@ -66,7 +66,7 @@
             width: 100%;
             height: 100%;
             background-color: green;
-            transition: width 5s linear;
+            transition: width linear;
         }
 
         /* Play/Pause Button */
@@ -110,6 +110,7 @@
     let slideIndex = 0;
     let timer;
     let playing = true;
+    let remainingTime = 0;  // Store the remaining time for the current slide
     const slideDuration = 5000; // Duration for each slide in milliseconds
 
     // Fetch data from Airtable
@@ -170,8 +171,9 @@
 
         // Reset the timer every time showSlides is called
         if (playing) {
-            updateProgressBar();
-            timer = setTimeout(showSlides, slideDuration); // Change image every 5 seconds
+            remainingTime = slideDuration;  // Reset remaining time for the new slide
+            updateProgressBar(slideDuration);  // Start progress bar for the new slide
+            timer = setTimeout(showSlides, remainingTime); // Change image after remaining time
         }
     }
 
@@ -185,25 +187,31 @@
     // Function to toggle play/pause
     function togglePlayPause() {
         const playPauseBtn = document.getElementById('playPauseBtn');
+        const progressBar = document.getElementById('progress');
 
         if (playing) {
             clearTimeout(timer);
+            remainingTime -= Date.now() - startTime; // Calculate remaining time for the slide
             playPauseBtn.textContent = 'Play';
+            progressBar.style.transition = 'none'; // Stop progress bar transition
         } else {
             playPauseBtn.textContent = 'Pause';
-            showSlides();
+            updateProgressBar(remainingTime);  // Resume progress bar from remaining time
+            timer = setTimeout(showSlides, remainingTime);  // Resume timer from remaining time
         }
         playing = !playing;
     }
 
     // Update the progress bar for each slide
-    function updateProgressBar() {
+    let startTime;
+    function updateProgressBar(duration) {
         const progressBar = document.getElementById('progress');
         progressBar.style.transition = 'none';
         progressBar.style.width = '100%'; // Reset to full width
 
         setTimeout(() => {
-            progressBar.style.transition = `width ${slideDuration}ms linear`;
+            startTime = Date.now();  // Record the start time
+            progressBar.style.transition = `width ${duration}ms linear`;
             progressBar.style.width = '0%';
         }, 50); // Small delay to allow reset before starting transition
     }
