@@ -78,6 +78,8 @@
 
 <script>
     let slideIndex = 0;
+    let timer; // Variable to store the timer
+
     showSlides();
 
     function showSlides() {
@@ -86,20 +88,24 @@
         for (let i = 0; i < slides.length; i++) {
             slides[i].style.display = "none";  
         }
+
         slideIndex++;
         if (slideIndex > slides.length) {slideIndex = 1}    
 
-        slides[slideIndex-1].style.display = "block";  
+        slides[slideIndex - 1].style.display = "block";  
 
-        setTimeout(showSlides, 5000); // Change image every 5 seconds
+        // Reset the timer every time showSlides is called
+        timer = setTimeout(showSlides, 5000); // Change image every 5 seconds
     }
 
     // Function to jump to a specific slide
     function currentSlide(n) {
-        slideIndex = n - 1;
-        showSlides();
+        clearTimeout(timer);  // Stop the auto-advance when manually selecting a slide
+        slideIndex = n - 1;   // Set the slideIndex to the selected slide
+        showSlides();         // Show the selected slide and restart the auto-advance
     }
 </script>
+
 
 </body>
 </html>
