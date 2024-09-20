@@ -76,7 +76,7 @@
 
     // Fetch data from Airtable
     async function fetchAirtableData() {
-        const url = `https://api.airtable.com/v0/$appa1EiPnr7GKKdCo/$tbl5yUPDhkMzYF7HE?api_key=$patRUMocUZ4bQ25if.4674c52b44732377a79d093f6db7fa9ac7ddf110c00257d696779e6c047a58bf`;
+        const url = `https://api.airtable.com/v0/appa1EiPnr7GKKdCo/tbl5yUPDhkMzYF7HE?api_key=patRUMocUZ4bQ25if.4674c52b44732377a79d093f6db7fa9ac7ddf110c00257d696779e6c047a58bf`;
         const response = await fetch(url);
         const data = await response.json();
         return data.records;
