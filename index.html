@@ -91,7 +91,7 @@
 
         // Populate the slideshow and preview menu with Airtable images
         records.forEach((record, index) => {
-            const imageUrl = record.fields.Image[0].url; // Assuming the Airtable field is 'Image'
+            const imageUrl = record.fields.picture[0].url; // Assuming the Airtable field is 'Image'
             const slideDiv = document.createElement('div');
             slideDiv.className = 'slides';
             slideDiv.innerHTML = `<img src="${imageUrl}" alt="Slide ${index + 1}">`;
