@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Full-Screen Slideshow with Music</title>
+    <title>Full-Screen Slideshow with MP3 Player</title>
     <style>
         * { box-sizing: border-box; }
         body, html { 
@@ -42,15 +42,31 @@
             justify-content: center;
             align-items: center;
         }
-        .preview-menu img {
+        .preview-menu img, .preview-menu .mp3-thumbnail {
             width: 90%;
             height: auto;
             margin: 10px 0;
             cursor: pointer;
             border: 2px solid transparent;
         }
-        .preview-menu img:hover {
+        .preview-menu img:hover, .preview-menu .mp3-thumbnail:hover {
             border-color: white;
+        }
+
+        /* MP3 Thumbnail styling */
+        .mp3-thumbnail {
+            position: relative;
+            width: 100px;
+            height: 70px;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .mp3-thumbnail::before {
+            content: '\25B6'; /* Unicode for play button */
+            font-size: 24px;
+            color: white;
         }
 
         /* Black Progress bar at the bottom */
@@ -126,7 +142,7 @@
 
 <!-- Preview Menu on the Left -->
 <div class="preview-menu" id="preview-menu">
-    <!-- Preview thumbnails will be dynamically inserted here -->
+    <!-- Preview thumbnails and MP3 thumbnails will be dynamically inserted here -->
 </div>
 
 <!-- Slideshow Container -->
@@ -211,30 +227,39 @@
 
         // Populate the slideshow and preview menu with Airtable images
         records.forEach((record, index) => {
-            const imageUrl = record.fields.Picture[0].url; // Assuming the Airtable field is 'Picture'
-            const slideDiv = document.createElement('div');
-            slideDiv.className = 'slides';
-            slideDiv.innerHTML = `<img src="${imageUrl}" alt="Slide ${index + 1}" onclick="togglePlayPauseCenter()">`;
+            if (record.fields.Picture) {
+                const imageUrl = record.fields.Picture[0].url; // Assuming the Airtable field is 'Picture'
+                const slideDiv = document.createElement('div');
+                slideDiv.className = 'slides';
+                slideDiv.innerHTML = `<img src="${imageUrl}" alt="Slide ${index + 1}" onclick="togglePlayPauseCenter()">`;
 
-            const previewImg = document.createElement('img');
-            previewImg.src = imageUrl;
-            previewImg.alt = `Preview ${index + 1}`;
-            previewImg.onclick = () => currentSlide(index + 1);
+                const previewImg = document.createElement('img');
+                previewImg.src = imageUrl;
+                previewImg.alt = `Preview ${index + 1}`;
+                previewImg.onclick = () => currentSlide(index + 1);
 
-            slidesContainer.appendChild(slideDiv);
-            previewMenu.appendChild(previewImg);
+                slidesContainer.appendChild(slideDiv);
+                previewMenu.appendChild(previewImg);
+            }
 
             // Check if MP3 is present in Airtable attachment
             if (record.fields.Audio && record.fields.Audio[0].type === 'audio/mpeg') {
-                audioSource.src = record.fields.Audio[0].url;
-                audioControls.style.display = 'block'; // Show MP3 player
-                audioPlayer.load(); // Load the new audio source
+                const mp3Url = record.fields.Audio[0].url;
+                
+                const mp3Thumbnail = document.createElement('div');
+                mp3Thumbnail.className = 'mp3-thumbnail';
+                mp3Thumbnail.onclick = () => {
+                    audioSource.src = mp3Url;
+                    audioControls.style.display = 'block'; // Show MP3 player
+                    audioPlayer.load();
+                    audioPlayer.play();
+                };
+                
+                previewMenu.appendChild(mp3Thumbnail);
             }
         });
 
         showSlides(); // Start the slideshow after images are loaded
-        updateTime(); // Initialize time update
-        setInterval(updateTime, 1000); // Update time every second
     }
 
     function showSlides() {
@@ -249,12 +274,12 @@
 
         slides[slideIndex - 1].style.display = "block";  
 
-        // Reset the timer and progress bar for the new slide
+        // Reset the timer every time showSlides is called
         if (playing) {
-            remainingTime = slideDuration;  // Reset remaining time for the new slide
-            progressStartTime = Date.now();  // Record the start time of the progress
+            progressStartTime = Date.now();
+            remainingTime = slideDuration;
             updateProgressBar(slideDuration);
-            timer = setTimeout(showSlides, slideDuration);  // Automatically advance to the next slide
+            timer = setTimeout(showSlides, slideDuration);
         }
     }
 
@@ -262,11 +287,12 @@
     function togglePlayPause() {
         if (playing) {
             clearTimeout(timer);
-            remainingTime -= Date.now() - progressStartTime;  // Calculate remaining time when paused
+            timePaused = Date.now() - progressStartTime;  // Calculate time passed when paused
+            remainingTime -= timePaused;
             playPauseBtn.innerHTML = '&#9654;';  // Change icon to play
         } else {
-            progressStartTime = Date.now();  // Reset start time for remaining progress
-            timer = setTimeout(showSlides, remainingTime);  // Continue to the next slide after remaining time
+            progressStartTime = Date.now();
+            timer = setTimeout(showSlides, remainingTime);  // Continue after remaining time
             updateProgressBar(remainingTime);  // Continue progress bar from where paused
             playPauseBtn.innerHTML = '&#10074;&#10074;';  // Change icon to pause
         }
@@ -300,6 +326,9 @@
             progressBar.style.width = '0%';
         }, 50); // Small delay to allow reset before starting transition
     }
+
+    // Update time every second
+    setInterval(updateTime, 1000);
 
     // Call renderSlides to load the images and MP3 from Airtable
     renderSlides();
