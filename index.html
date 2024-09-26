@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Full-Screen Slideshow with Airtable Images</title>
+    <title>Full-Screen Slideshow with Music</title>
     <style>
         * { box-sizing: border-box; }
         body, html { 
@@ -82,6 +82,18 @@
             font-size: 24px;
         }
 
+        /* Pause/Play Center Icon */
+        .center-play-pause-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+            color: white;
+            display: none;
+            opacity: 0.7;
+        }
+
         /* Current Time Display */
         .time-display {
             position: absolute;
@@ -92,6 +104,20 @@
             background-color: rgba(0, 0, 0, 0.5);
             padding: 5px 10px;
             border-radius: 5px;
+        }
+
+        /* MP3 Player Controls */
+        .audio-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .audio-controls audio {
+            width: 300px;
         }
     </style>
 </head>
@@ -115,8 +141,19 @@
 <!-- Play/Pause Button as Icon -->
 <button class="play-pause-button" id="playPauseBtn" onclick="togglePlayPause()">&#10074;&#10074;</button>
 
+<!-- Pause/Play Center Icon -->
+<div class="center-play-pause-icon" id="centerIcon">&#10074;&#10074;</div>
+
 <!-- Current Time Display -->
 <div class="time-display" id="timeDisplay"></div>
+
+<!-- MP3 Player -->
+<div class="audio-controls">
+    <audio controls id="audioPlayer">
+        <source src="your-audio-file.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+</div>
 
 <script>
     const airtableApiKey = 'patRUMocUZ4bQ25if.4674c52b44732377a79d093f6db7fa9ac7ddf110c00257d696779e6c047a58bf';
@@ -130,6 +167,9 @@
     const slideDuration = 5000; // Duration for each slide in milliseconds
     let progressStartTime;  // Time when the progress bar starts moving
     let timePaused = 0;  // Time remaining when paused
+
+    const centerIcon = document.getElementById('centerIcon');
+    const playPauseBtn = document.getElementById('playPauseBtn');
 
     // Update and display current time
     function updateTime() {
@@ -169,7 +209,7 @@
             const imageUrl = record.fields.Picture[0].url; // Assuming the Airtable field is 'Picture'
             const slideDiv = document.createElement('div');
             slideDiv.className = 'slides';
-            slideDiv.innerHTML = `<img src="${imageUrl}" alt="Slide ${index + 1}">`;
+            slideDiv.innerHTML = `<img src="${imageUrl}" alt="Slide ${index + 1}" onclick="togglePlayPauseCenter()">`;
 
             const previewImg = document.createElement('img');
             previewImg.src = imageUrl;
@@ -214,22 +254,27 @@
 
     // Function to toggle play/pause
     function togglePlayPause() {
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const progressBar = document.getElementById('progress');
-
         if (playing) {
-            clearTimeout(timer);  // Pause the slideshow
-            timePaused = remainingTime - (Date.now() - progressStartTime);  // Calculate the remaining time
-            playPauseBtn.innerHTML = '&#9658;'; // Change to play icon
-            progressBar.style.transition = 'none'; // Stop the progress bar
-            progressBar.style.width = getComputedStyle(progressBar).width;  // Keep current width
+            clearTimeout(timer);
+            remainingTime -= Date.now() - progressStartTime;  // Calculate remaining time
+            playPauseBtn.innerHTML = '&#9654;';  // Change icon to play
         } else {
-            playPauseBtn.innerHTML = '&#10074;&#10074;'; // Change to pause icon
-            progressStartTime = Date.now();  // Reset the progress bar start time
-            updateProgressBar(timePaused);  // Resume the progress bar from where it left off
-            timer = setTimeout(showSlides, timePaused);  // Resume slideshow from the remaining time
+            progressStartTime = Date.now();  // Reset start time for remaining progress
+            timer = setTimeout(showSlides, remainingTime);  // Continue to next slide
+            updateProgressBar(remainingTime);  // Continue progress bar from where paused
+            playPauseBtn.innerHTML = '&#10074;&#10074;';  // Change icon to pause
         }
         playing = !playing;
+    }
+
+    // Toggle play/pause by tapping the center of the image
+    function togglePlayPauseCenter() {
+        togglePlayPause();  // Toggle slideshow play/pause
+        centerIcon.innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';  // Change icon
+        centerIcon.style.display = 'block';  // Show icon
+        setTimeout(() => {
+            centerIcon.style.display = 'none';  // Hide icon after 1 second
+        }, 1000);
     }
 
     // Update the progress bar for each slide
@@ -239,7 +284,6 @@
         progressBar.style.width = '100%'; // Reset to full width
 
         setTimeout(() => {
-            progressStartTime = Date.now();  // Record the start time
             progressBar.style.transition = `width ${duration}ms linear`;
             progressBar.style.width = '0%';
         }, 50); // Small delay to allow reset before starting transition
