@@ -115,6 +115,7 @@
             color: white;
             padding: 10px;
             border-radius: 5px;
+            display: none; /* Hidden by default */
         }
         .audio-controls audio {
             width: 300px;
@@ -148,28 +149,32 @@
 <div class="time-display" id="timeDisplay"></div>
 
 <!-- MP3 Player -->
-<div class="audio-controls">
+<div class="audio-controls" id="audioControls">
     <audio controls id="audioPlayer">
-        <source src="your-audio-file.mp3" type="audio/mpeg">
+        <source id="audioSource" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 </div>
 
 <script>
-    const airtableApiKey = 'patRUMocUZ4bQ25if.4674c52b44732377a79d093f6db7fa9ac7ddf110c00257d696779e6c047a58bf';
-    const airtableBaseId = 'appa1EiPnr7GKKdCo';
-    const airtableTableName = 'tbl5yUPDhkMzYF7HE';
+    const airtableApiKey = 'YOUR_AIRTABLE_API_KEY';
+    const airtableBaseId = 'YOUR_BASE_ID';
+    const airtableTableName = 'YOUR_TABLE_NAME';
     
     let slideIndex = 0;
     let timer;
     let playing = true;
-    let remainingTime = 0;  // Store the remaining time for the current slide
-    const slideDuration = 5000; // Duration for each slide in milliseconds
-    let progressStartTime;  // Time when the progress bar starts moving
+    let progressStartTime;
     let timePaused = 0;  // Time remaining when paused
+    const slideDuration = 5000; // Duration for each slide in milliseconds
+    let remainingTime = slideDuration;  // Track remaining time
 
     const centerIcon = document.getElementById('centerIcon');
     const playPauseBtn = document.getElementById('playPauseBtn');
+    const progressBar = document.getElementById('progress');
+    const audioControls = document.getElementById('audioControls');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const audioSource = document.getElementById('audioSource');
 
     // Update and display current time
     function updateTime() {
@@ -218,6 +223,13 @@
 
             slidesContainer.appendChild(slideDiv);
             previewMenu.appendChild(previewImg);
+
+            // Check if MP3 is present in Airtable attachment
+            if (record.fields.Audio && record.fields.Audio[0].type === 'audio/mpeg') {
+                audioSource.src = record.fields.Audio[0].url;
+                audioControls.style.display = 'block'; // Show MP3 player
+                audioPlayer.load(); // Load the new audio source
+            }
         });
 
         showSlides(); // Start the slideshow after images are loaded
@@ -240,27 +252,21 @@
         // Reset the timer and progress bar for the new slide
         if (playing) {
             remainingTime = slideDuration;  // Reset remaining time for the new slide
-            updateProgressBar(remainingTime);  // Start progress bar for the new slide
-            timer = setTimeout(showSlides, remainingTime); // Change image after remaining time
+            progressStartTime = Date.now();  // Record the start time of the progress
+            updateProgressBar(slideDuration);
+            timer = setTimeout(showSlides, slideDuration);  // Automatically advance to the next slide
         }
     }
 
-    // Function to jump to a specific slide
-    function currentSlide(n) {
-        clearTimeout(timer);  // Stop the auto-advance when manually selecting a slide
-        slideIndex = n - 1;   // Set the slideIndex to the selected slide
-        showSlides();         // Show the selected slide and restart the auto-advance
-    }
-
-    // Function to toggle play/pause
+    // Toggle play/pause
     function togglePlayPause() {
         if (playing) {
             clearTimeout(timer);
-            remainingTime -= Date.now() - progressStartTime;  // Calculate remaining time
+            remainingTime -= Date.now() - progressStartTime;  // Calculate remaining time when paused
             playPauseBtn.innerHTML = '&#9654;';  // Change icon to play
         } else {
             progressStartTime = Date.now();  // Reset start time for remaining progress
-            timer = setTimeout(showSlides, remainingTime);  // Continue to next slide
+            timer = setTimeout(showSlides, remainingTime);  // Continue to the next slide after remaining time
             updateProgressBar(remainingTime);  // Continue progress bar from where paused
             playPauseBtn.innerHTML = '&#10074;&#10074;';  // Change icon to pause
         }
@@ -277,9 +283,15 @@
         }, 1000);
     }
 
+    // Function to jump to a specific slide
+    function currentSlide(n) {
+        clearTimeout(timer);  // Stop the auto-advance when manually selecting a slide
+        slideIndex = n - 1;   // Set the slideIndex to the selected slide
+        showSlides();         // Show the selected slide and restart the auto-advance
+    }
+
     // Update the progress bar for each slide
     function updateProgressBar(duration) {
-        const progressBar = document.getElementById('progress');
         progressBar.style.transition = 'none';
         progressBar.style.width = '100%'; // Reset to full width
 
@@ -289,7 +301,7 @@
         }, 50); // Small delay to allow reset before starting transition
     }
 
-    // Call renderSlides to load the images from Airtable
+    // Call renderSlides to load the images and MP3 from Airtable
     renderSlides();
 </script>
 
