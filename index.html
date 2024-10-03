@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Full-Screen Slideshow with MP3 Player</title>
+    <title>Full-Screen Slideshow with MP3 Player and Iframe Support</title>
     <style>
         * { box-sizing: border-box; }
         body, html { 
@@ -24,7 +24,7 @@
             width: 100%;
             height: 100vh;
         }
-        .slides img {
+        .slides img, .slides iframe {
             width: 100%;
             height: 100%;
             object-fit: contain; /* Ensure images fit fully */
@@ -147,7 +147,7 @@
 
 <!-- Slideshow Container -->
 <div class="slideshow-container" id="slideshow-container">
-    <!-- Slideshow images will be dynamically inserted here -->
+    <!-- Slideshow images or iframes will be dynamically inserted here -->
 </div>
 
 <!-- Progress bar -->
@@ -227,30 +227,42 @@
 
         // Populate the slideshow and preview menu with Airtable images
         records.forEach((record, index) => {
+            let imageUrl = null;
+            let isIframe = false;
+
+            // If 'Picture' field exists, use it. Otherwise, check if it's a URL (iframe case)
             if (record.fields.Picture) {
-                const imageUrl = record.fields.Picture[0].url; // Assuming the Airtable field is 'Picture'
-                const slideDiv = document.createElement('div');
-                slideDiv.className = 'slides';
-                slideDiv.innerHTML = `<img src="${imageUrl}" alt="Slide ${index + 1}" onclick="togglePlayPauseCenter()">`;
-
-                const previewImg = document.createElement('img');
-                previewImg.src = imageUrl;
-                previewImg.alt = `Preview ${index + 1}`;
-                previewImg.onclick = () => currentSlide(index + 1);
-
-                slidesContainer.appendChild(slideDiv);
-                previewMenu.appendChild(previewImg);
+                imageUrl = record.fields.Picture[0].url;
+            } else if (record.fields.Link) {
+                imageUrl = record.fields.Link;
+                isIframe = true;
             }
 
-            // Check if MP3 is present in Airtable attachment
-            if (record.fields.Audio && record.fields.Audio[0].type === 'audio/mpeg') {
+            const slideDiv = document.createElement('div');
+            slideDiv.className = 'slides';
+
+            if (isIframe) {
+                slideDiv.innerHTML = `<iframe src="${imageUrl}" frameborder="0" allowfullscreen></iframe>`;
+            } else {
+                slideDiv.innerHTML = `<img src="${imageUrl}" alt="Slide ${index + 1}" onclick="togglePlayPauseCenter()">`;
+            }
+
+            const previewImg = document.createElement('img');
+            previewImg.src = isIframe ? 'iframe-preview-thumbnail.png' : imageUrl;  // You can replace this with a custom iframe thumbnail
+            previewImg.alt = `Preview ${index + 1}`;
+            previewImg.onclick = () => currentSlide(index + 1);
+
+            slidesContainer.appendChild(slideDiv);
+            previewMenu.appendChild(previewImg);
+
+            // Handle MP3 files if present
+            if (record.fields.Audio) {
                 const mp3Url = record.fields.Audio[0].url;
-                
                 const mp3Thumbnail = document.createElement('div');
                 mp3Thumbnail.className = 'mp3-thumbnail';
                 mp3Thumbnail.onclick = () => {
+                    audioControls.style.display = 'block';
                     audioSource.src = mp3Url;
-                    audioControls.style.display = 'block'; // Show MP3 player
                     audioPlayer.load();
                     audioPlayer.play();
                 };
@@ -330,7 +342,7 @@
     // Update time every second
     setInterval(updateTime, 1000);
 
-    // Call renderSlides to load the images and MP3 from Airtable
+    // Call renderSlides to load the images, iframes, and MP3s from Airtable
     renderSlides();
 </script>
 
